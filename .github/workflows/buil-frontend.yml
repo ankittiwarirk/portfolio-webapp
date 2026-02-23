@@ -31,7 +31,7 @@ jobs:
       - name: Build and push frontend image
         uses: docker/build-push-action@v5
         with:
-          context: ./frontend        # path to frontend folder
+          context: .        # path to frontend folder
           file: ./Dockerfile.frontend
           push: true
           tags: ghcr.io/ankittiwarirk/portfolio-frontend:latest
