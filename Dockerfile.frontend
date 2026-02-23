@@ -1,20 +1,33 @@
-# ---------- Stage 1: Build React ----------
+# Stage 1: Build React + Tailwind
 FROM node:20 AS build
 
 WORKDIR /app
 
+# Copy package.json and install dependencies
 COPY frontend/package*.json ./
 RUN npm install
 
+# Copy all frontend source files
 COPY frontend/ .
+
+# Build the React app
 RUN npm run build
 
+# Stage 2: Serve with Nginx (OpenShift-friendly)
+FROM nginx:stable-alpine
 
-# ---------- Stage 2: OpenShift-compatible Nginx ----------
-FROM nginxinc/nginx-unprivileged:stable-alpine
+# Create directories writable by OpenShift random UID
+RUN mkdir -p /tmp/nginx/cache /tmp/nginx/logs
 
-# Copy build output
+# Copy built React app to Nginx html directory
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Nginx unprivileged runs on 8080
-EXPOSE 8080
+# Adjust Nginx config to use writable cache/log directories
+RUN sed -i 's|client_body_temp /var/cache/nginx/client_temp;|client_body_temp /tmp/nginx/cache;|' /etc/nginx/nginx.conf \
+    && sed -i 's|error_log /var/log/nginx/error.log;|error_log /tmp/nginx/logs/error.log;|' /etc/nginx/nginx.conf \
+    && sed -i 's|access_log /var/log/nginx/access.log;|access_log /tmp/nginx/logs/access.log;|' /etc/nginx/nginx.conf
+
+EXPOSE 80
+
+# Use default Nginx start command
+CMD ["nginx", "-g", "daemon off;"]
