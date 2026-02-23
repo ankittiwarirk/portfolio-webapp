@@ -32,6 +32,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./frontend        # path to frontend folder
+          file: ./Dockerfile.frontend
           push: true
           tags: ghcr.io/ankittiwarirk/portfolio-frontend:latest
 
